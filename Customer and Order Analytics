@@ -1,0 +1,40 @@
+#I used SQL to answer various questions about a database with multiple tables of data. These tables contain data about customers and their orders each month.
+
+#How many orders were placed in January?
+SELECT COUNT(*) FROM BIT_DB.JanSales
+WHERE length(orderID) = 6
+AND orderID <> 'Order ID';
+
+#How many of those orders were for an iPhone?
+SELECT COUNT(*) FROM BIT_DB.JanSales
+WHERE length(orderID) = 6
+AND orderID <> 'Order ID'
+AND Product = 'iPhone';
+
+#Select all the customer account numbers for all of the orders made in February
+SELECT DISTINCT acctnum FROM BIT_DB.customers AS customers
+INNER JOIN BIT_DB.FebSales AS feb
+ON customers.order_id = feb.orderID;
+
+#Which product was the cheapest sold in January and what was the price?
+SELECT DISTINCT Product, price FROM BIT_DB.JanSales
+WHERE price IN(SELECT MIN(price) FROM BIT_DB.JanSales);
+
+#What is the total revenue for each product sold in January?
+SELECT Product, SUM(quantity)*price AS total_rev FROM BIT_DB.JanSales
+GROUP BY Product;
+
+#Which products were sold in February at 548 Lincoln St, Seattle, WA 98101, how many of each were sold, and what was the total revenue?
+SELECT Product, Quantity, price, location, SUM(quantity)*price AS total_rev
+FROM BIT_DB.FebSales
+WHERE location = '548 Lincoln St, Seattle, WA 98101'
+GROUP BY Product;
+
+#How many customers ordered more than 2 products at a time in February, and what was the average amount spent for those customers?
+SELECT COUNT(DISTINCT cust.acctnum), AVG(Quantity*price) FROM BIT_DB.FebSales AS feb
+LEFT JOIN BIT_DB.customers AS cust
+ON cust.order_id = feb.orderID
+WHERE Quantity > 2
+AND length(orderID) = 6
+AND orderID <> 'Order ID';
+
