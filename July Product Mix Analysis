@@ -1,0 +1,144 @@
+##I conducted an analysis using SQL of a restaurant's product mix from July 2024.
+## I answered the following questions about the data to get information to set new pars for truck deliveries.
+
+#How many flour tortillas were used? 
+#The first query selects all the menu items that use 1 flour tortilla each.
+#I used the LIKE function to avoid having to write out the full name of each item
+#I had to use the AND function to filter out items that had similar names, but did not use flour tortillas.
+SELECT SUM(Quantity)
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%Buffalo%'
+OR Item LIKE '%Nashville%'
+OR Item LIKE '%Paneer%'
+OR Item LIKE '%Cauliflower%'
+OR Item LIKE '%Rotisserie%'
+OR Item LIKE '%Cuban%'
+OR Item LIKE '%Korean%'
+OR Item LIKE '%Tikka%'
+OR Item LIKE '%Burger%'
+OR Item LIKE '%Chimi%'
+OR Item LIKE '%Angus%'
+OR Item LIKE '%Picnic%'
+OR Item LIKE '%Shrimp%'
+AND Item <> '#13 Shrimp Ceviche'
+OR Item LIKE '%Fish%'
+AND Menu = 'Food Menu'
+OR Item LIKE '%Nashville Hot%'
+OR Item LIKE '%Chicken Taco%'
+OR Item LIKE '%Steak Taco%';
+#I ran a second query for items that use 2 quesadillas.
+SELECT SUM(Quantity)*2
+FROM BIT_DB.julypmix
+WHERE ITEM LIKE '%Quesadilla%';
+#Added both queries together for the final answer.
+
+#How many corn tortillas were used?
+#I used the LIKE function to select the items that use 1 corn tortilla without having to write out all the names.
+SELECT SUM(Quantity)
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%Grilled%'
+OR Item LIKE '%GF%';
+#I ran a second query for the items that use 2 corn tortillas per order.
+SELECT SUM(Quantity)*2
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%Birria%';
+#I added up both queries for the final answer.
+
+#How much chips did we sell?
+#First, I ran a query to find out how many oz of chips were sold with our items that offer 5oz of chips each.
+#I used AND statements because we have personal size quesos and catering sizes. I filtered out the catering sizes with the AND statement.
+SELECT SUM(Quantity)*5
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%Queso%'
+AND Menu = 'Food Menu'
+OR Item LIKE '%Elote%'
+AND Menu = 'Food Menu'
+OR Item Like '%Salsa%'
+OR Item = 'Classic Guac'
+OR Item = 'Chips'
+OR Item LIKE '%Nachos%';
+#Next, I ran a query to find out how many oz of chips were sold with our items that offer 8oz of chips each.
+#Each of the queries following this accomplish the same purpose for different size menu items.
+SELECT SUM(Quantity)*8
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%Trio%';
+SELECT SUM(Quantity)*3
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%box%';
+SELECT SUM(Quantity)*32
+FROM BIT_DB.julypmix
+WHERE ITEM LIKE '%party%';
+SELECT SUM(Quantity)*24
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%Lg%'
+AND Category='Food';
+SELECT SUM(Quantity)*16
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%reg%'
+AND Category = 'Food'
+OR Item = 'Catering Guac';
+#I added up the number from all of these queries to get my final answer.
+
+#How much cod are we selling? Convert to lbs.
+#Each item sold has approx. 2 oz of protein
+#I multiply the total items sold to get the total weight, then divide by 16 to convert to pounds.
+#I use AND to filter my results because there are items on the drink menu with a name containing the word 'fish'.
+SELECT SUM(Quantity)*2/16 AS 'lbs of fish'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%fish%'
+AND Menu = 'Food Menu';
+
+#How much salmon are we selling? Convert to lbs.
+SELECT SUM(Quantity)*2/16 AS 'lbs of salmon'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%salmon%';
+
+#How many burgers are we selling?
+SELECT SUM(Quantity) AS 'burgers sold'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%burger%';
+
+#How many pounds of tater tots are we selling?
+#First, I get the total weight of items sold that use 10oz of tots. I divide by 16 to convert to lbs.
+SELECT SUM(Quantity)*10/16 AS 'lb of tots'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%tots%';
+#Next, I run a query to find the total weight sold of items that use 1 oz of tots, then divide by 16 to convert to lbs.
+SELECT SUM(Quantity)/16 AS 'lb of tots'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%chicken taco%'
+OR Item LIKE '%steak taco%';
+#Next, I ran a query to find the total weight sold of items that use 2 oz of tots, then divide by 16 to convert to lbs.
+SELECT Quantity*2/16 AS 'lb of tots'
+FROM BIT_DB.julypmix
+WHERE Item LIKE'%Chicken Tenders%';
+#I can now add up the total from the queries about to answer the question.
+
+#How many bags of brisket are we selling?
+#Each item that we sell has 2 oz of protein. Each bag contains 2 lb of protein.
+#I ran a query to get the total amount of brisket items sold. I multiplied by 2 to get the total weight of brisket sold.
+#Next, I divided by 32oz to convert to the total number of bags sold.
+SELECT SUM(Quantity)*2/32 AS 'bags of brisket'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%brisket%';
+
+#How many bags of chicken are we selling?
+SELECT SUM(Quantity)*2/32 AS 'bags of chicken'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%rotisserie%'
+OR Item LIKE '%picnic%';
+
+#How many bags of pork are we selling?
+SELECT SUM(Quantity)*2/32 AS 'bags of pork'
+FROM BIT_DB.julypmix
+WHERE Item LIKE 'cuban%'
+OR Item LIKE '%birria%'
+OR Item LIKE '%korean%';
+
+#How many pounds of shrimp are we selling?
+#I used the AND function to exlucde an item that was not a part of our permanent menu.
+SELECT SUM(Quantity)*2/16 AS 'lbs of shrimp'
+FROM BIT_DB.julypmix
+WHERE Item LIKE '%shrimp%'
+AND Item <> '#13 Shrimp Ceviche';
+
