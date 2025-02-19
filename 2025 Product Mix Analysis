@@ -1,15 +1,15 @@
-I did another analysis of a product mix using real data from my restaurant to get a better understanding of what to order on trucks.
-The dataset 'pmix' contains all the items that my restaurant offers and the quantity sold of each item so far in the year 2025. I cleaned the dataset in excel before importing it to MySQL.
-The other dataset 'builds' I created myself in excel. It contains information about what ingredients each taco has to make this analysis much easier and more detailed.
+#I did another analysis of a product mix using real data from my restaurant to get a better understanding of what to order on trucks.
+#The dataset 'pmix' contains all the items that my restaurant offers and the quantity sold of each item so far in the year 2025. I cleaned the dataset in excel before importing it to MySQL.
+#The other dataset 'builds' I created myself in excel. It contains information about what ingredients each taco has to make this analysis much easier and more detailed.
 
-How many of each type of tortilla did we sell?
+#How many of each type of tortilla did we sell?
 SELECT tortilla, sum(qty) AS amt_tortillas_sold
 FROM pmix
 JOIN builds
 ON builds.id = pmix.id
 GROUP BY tortilla;
 
-How much chips did we sell?
+#How much chips did we sell?
 WITH chipstable AS (
 SELECT *, 
 CASE
@@ -32,10 +32,10 @@ OR item LIKE '%nacho%'
 )
 SELECT sum(qty*ounces_of_chips) AS total_oz_chips_sold
 FROM chipstable;
-I created a CTE that had a CASE statement in it to find the total ounces of chips sold. 
-We have different sizes of items that use different amounts of chips. The CASE statement added a column that had the quantity of chips for each side.
+#I created a CTE that had a CASE statement in it to find the total ounces of chips sold. 
+#We have different sizes of items that use different amounts of chips. The CASE statement added a column that had the quantity of chips for each side.
 
-How many cases of each seafood did we sell?
+#How many cases of each seafood did we sell?
 SELECT protein, sum(qty)/80 AS cases_sold
 FROM pmix
 JOIN builds
@@ -44,10 +44,10 @@ GROUP BY protein
 HAVING protein = 'salmon'
 OR protein = 'shrimp'
 OR protein = 'fish';
-I am dividing the quantity of orders by 80 to convert the number of tacos sold to the number of cases used.
-Each taco has 2oz of meat, divided by 16 to convert to lbs, divided by 10 to convert to cases (each case of seafood weighs 10lb).
+#I am dividing the quantity of orders by 80 to convert the number of tacos sold to the number of cases used.
+#Each taco has 2oz of meat, divided by 16 to convert to lbs, divided by 10 to convert to cases (each case of seafood weighs 10lb).
 
-How many bags of pork and chicken did we sell?
+#How many bags of pork and chicken did we sell?
 SELECT protein, sum(qty)/16 AS bags_sold
 FROM pmix
 JOIN builds
@@ -55,10 +55,10 @@ ON builds.id = pmix.id
 GROUP BY protein
 HAVING protein = 'pork'
 OR protein = 'rotis';
-I am dividing the quantity of orders by 16 to convert to the number of bags used.
-Each taco has 2 oz of meat, divided by 16 to convert to lb, divided by 2 to convert to bags (each bag weighs 2lb).
+#I am dividing the quantity of orders by 16 to convert to the number of bags used.
+#Each taco has 2 oz of meat, divided by 16 to convert to lb, divided by 2 to convert to bags (each bag weighs 2lb).
 
-How many bags of brisket did we sell?
+#How many bags of brisket did we sell?
 WITH brisketcte AS (
 SELECT *,
 CASE
@@ -71,18 +71,18 @@ OR item like '%brisket%'
 )
 SELECT sum(qty*oz_brisket)/32 AS bags_brisket_sold
 FROM brisketcte;
-I did brisket separately because brisket is on a taco and on nachos. The nachos are not included in the 'builds' table.
-Similar to the chips, I created a CTE with a CASE statement that assigned the number of ounces to each item that has brisket on the menu.
+#I did brisket separately because brisket is on a taco and on nachos. The nachos are not included in the 'builds' table.
+#Similar to the chips, I created a CTE with a CASE statement that assigned the number of ounces to each item that has brisket on the menu.
 
-How many cases of burgers did we sell?
+#How many cases of burgers did we sell?
 SELECT item, qty/64 AS cases_burger_sold
 FROM pmix
 JOIN builds
 ON builds.id = pmix.id
 WHERE protein = 'burger';
-I divided by 64 to convert amount sold to cases. There are 64 burgers in each case.
+#I divided by 64 to convert amount sold to cases. There are 64 burgers in each case.
 
-How many containers of sauce do we use for tacos for every 10,000 dollars in sales?
+#How many containers of sauce do we use for tacos for every 10,000 dollars in sales?
 WITH sauce1cte AS (
 SELECT sauce1, sum(qty) AS orders_sold,
 CASE
@@ -116,11 +116,11 @@ GROUP BY sauce2
 )
 SELECT sauce2, orders_sold*conversion/41.4847 AS containers_sold_per_10k_sales
 FROM sauce2cte;
-I created CTEs using a CASE statement that converts the amount of each sauce used per taco (1tsp, 1TBSP, or 1.5oz) to the container it is stored in (24oz bottles, bags).
-I excluded nashville sauce because I wasn't concerned about how much of it my restaurant was using. I also excluded all blank values.
-I am dividing by 41.4847 to get containers sold per $10k sales because the total sales we had for this time period was $414,847.
+#I created CTEs using a CASE statement that converts the amount of each sauce used per taco (1tsp, 1TBSP, or 1.5oz) to the container it is stored in (24oz bottles, bags).
+#I excluded nashville sauce because I wasn't concerned about how much of it my restaurant was using. I also excluded all blank values.
+#I am dividing by 41.4847 to get containers sold per $10k sales because the total sales we had for this time period was $414,847.
 
-For every 10k in sales, how much chimichurri did we use for our sides?
+#For every 10k in sales, how much chimichurri did we use for our sides?
 WITH chimicte AS (
 SELECT item, qty, 
 CASE
@@ -135,7 +135,7 @@ OR item LIKE '%nacho%'
 SELECT sum(qty*conversion_factor)/41.4847 AS bottles_chimi_used
 FROM chimicte;
 
-For every 10k in sales, how much mayo crema did we use for our sides?
+#For every 10k in sales, how much mayo crema did we use for our sides?
 WITH mayocte AS (
 SELECT item, qty,
 CASE
@@ -157,10 +157,10 @@ UNION
 SELECT sum(qty*conversion_factor)/41.4847 AS btls_mayo_used
 FROM mayocte
 WHERE item LIKE '%nachos%';
-First, I created a CTE similar to the one used above for sauces.
-Mayo for elotes and nachos are stored in two different containers, but instead of writing 2 separate statements with the same CTE, I used the UNION function.
+#First, I created a CTE similar to the one used above for sauces.
+#Mayo for elotes and nachos are stored in two different containers, but instead of writing 2 separate statements with the same CTE, I used the UNION function.
 
-How many bags of ranchero salsa did we use?
+#How many bags of ranchero salsa did we use?
 WITH salsacte AS (
 SELECT *,
 CASE
@@ -178,28 +178,28 @@ FROM pmix
 JOIN builds
 ON pmix.id = builds.id
 WHERE hot2 = 'ranchero';
-The first half calculates the bags of salsa used for our 2 sizes of chips and salsa.
-The second half calculates the bags of salsa used for the all of the tacos that have salsa on them.
+#The first half calculates the bags of salsa used for our 2 sizes of chips and salsa.
+#The second half calculates the bags of salsa used for the all of the tacos that have salsa on them.
 
-How many bags of gravy did we use?
+#How many bags of gravy did we use?
 SELECT sum(qty)*.0625 AS bags_gravy_used
 FROM pmix
 WHERE item like '%waffle%';
-I could have joined the pmix and builds table together for this, but since I knew the only taco that has gravy on it is the waffle I decided not to join the tables.
+#I could have joined the pmix and builds table together for this, but since I knew the only taco that has gravy on it is the waffle I decided not to join the tables.
 
-How many pans of chicken tenders did we use?
+#How many pans of chicken tenders did we use?
 SELECT sum(qty)/80 AS pans_tenders_used
 FROM pmix
 JOIN builds
 ON builds.id = pmix.id
 WHERE protein = 'fry chk';
 
-How many recipes of mushrooms did we use?
+#How many recipes of mushrooms did we use?
 SELECT qty/45 AS recipies_mushroom_used 
 FROM pmix
 WHERE item LIKE '%grilled steak%';
 
-How many pans of guacamole did we use?
+#How many pans of guacamole did we use?
 WITH guaccte AS (
 SELECT item, qty, 
 CASE
@@ -213,9 +213,9 @@ WHERE item LIKE '%guac%'
 )
 SELECT sum(qty*ounces_guac)/16/4.4 AS total_pans_guac
 FROM guaccte;
-I'm dividing the total ounces by 16 to convert to lbs, and 4.4 to convert to pans (each pan is 4.4lb).
+#I'm dividing the total ounces by 16 to convert to lbs, and 4.4 to convert to pans (each pan is 4.4lb).
 
-How many bags of queso did we use for sides?
+#How many bags of queso did we use for sides?
 WITH qcte AS (
 SELECT *, CASE
 WHEN item = 'reg nachos' THEN 3
@@ -232,7 +232,7 @@ OR item LIKE '%nacho%'
 SELECT sum(qty*ounces_queso)/64 AS bags_queso
 FROM qcte;
 
-How many bags of queso did we use for tacos?
+#How many bags of queso did we use for tacos?
 WITH quesocte AS (
 SELECT name, hot1, qty,
 CASE
@@ -247,28 +247,28 @@ WHERE hot1 = 'queso'
 SELECT sum(qty*ounces_queso)/64 AS bags_queso_used
 FROM quesocte;
 
-How many pans of steak did we use?
+#How many pans of steak did we use?
 SELECT sum(qty)/8/7.4 AS pans_stk_used
 FROM pmix
 JOIN builds
 ON pmix.id = builds.id
 WHERE protein = 'steak';
 
-How many pans of paneer did we use?
+#How many pans of paneer did we use?
 SELECT sum(qty)/8/2.6 AS pans_paneer_used
 FROM pmix
 JOIN builds
 ON pmix.id = builds.id
 WHERE protein = 'paneer';
 
-How many pans of tofu did we use?
+#How many pans of tofu did we use?
 SELECT sum(qty)/8/3.2 AS pans_tofu_used
 FROM pmix
 JOIN builds
 ON pmix.id = builds.id
 WHERE protein = 'tofu';
 
-How many gallons of cauliflower did we use?
+#How many gallons of cauliflower did we use?
 SELECT sum(qty)/8/3 AS gal_cauliflower_used
 FROM pmix
 JOIN builds
