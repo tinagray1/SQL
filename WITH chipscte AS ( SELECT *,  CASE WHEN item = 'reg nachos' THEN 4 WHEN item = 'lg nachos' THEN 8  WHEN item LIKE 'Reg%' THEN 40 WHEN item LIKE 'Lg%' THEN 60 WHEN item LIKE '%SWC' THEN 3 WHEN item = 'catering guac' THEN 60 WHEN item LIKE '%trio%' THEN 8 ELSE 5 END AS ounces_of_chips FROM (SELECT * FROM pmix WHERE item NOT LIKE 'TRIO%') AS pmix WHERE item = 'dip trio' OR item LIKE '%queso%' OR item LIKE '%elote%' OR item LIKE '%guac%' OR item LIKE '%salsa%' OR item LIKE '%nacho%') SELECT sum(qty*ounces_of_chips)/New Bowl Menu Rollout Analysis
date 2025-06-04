@@ -1,0 +1,198 @@
+#Recently, a taco restaurant added bowls to their menu. A manager asked me to analyze their sales data using SQL to see if this had any impact on how much they were using key ingredients.
+#The table 'pmix' contains each item on the menu and the quantity sold during the time period.
+#I created the 'builds' table. Each column has the ingredients of the tacos and bowls on the menu.
+#This is the same restaurant as the last product mix analysis I did. It will be interesting to see how adding bowls to the menu changes things!
+
+#How many tortillas were used?
+SELECT tortilla, sum(qty) AS amt_tortillas_sold
+FROM pmix
+JOIN builds
+ON builds.id = pmix.id
+GROUP BY tortilla;
+#The restaurant used less tortillas on average.
+#I recommended that they lower pars for tortillas on truck orders to ensure freshness and conserve storage space.
+
+#How much fried chicken was used?
+WITH frychk AS
+(SELECT item, qty,
+CASE WHEN item LIKE '%bowl%' THEN 4 #bowls have 4 oz of meat and tacos have 2
+ELSE 2
+END AS ounces
+FROM pmix
+JOIN builds
+ON builds.id = pmix.id
+WHERE protein = 'fry chk')
+SELECT sum(qty*ounces) AS total_oz_fry_chicken
+FROM frychk;
+
+#How much rotisserie chicken was used?
+WITH rotis AS 
+(SELECT item, qty,
+CASE WHEN item LIKE '%bowl%' THEN 4
+ELSE 2
+END AS ounces
+FROM pmix
+JOIN builds
+ON builds.id = pmix.id
+WHERE protein = 'rotis')
+SELECT sum(qty*ounces)/32 AS bags_rotis_used #each bag is 2 lbs so I divide by 32 to convert from oz to bags.
+FROM rotis;
+
+#How much steak was used?
+WITH steak AS
+(SELECT item, qty,
+CASE WHEN item LIKE '%bowl%' THEN 4
+ELSE 2
+END AS ounces
+FROM pmix
+JOIN builds
+ON builds.id = pmix.id
+WHERE protein = 'steak')
+SELECT sum(qty*ounces)/16 AS total_lb_steak
+FROM steak;
+
+#How much brisket was used?
+WITH brisketcte AS 
+(SELECT item, qty,
+CASE WHEN item LIKE '%bowl%' OR item LIKE '%LG%' THEN 4
+ELSE 2
+END AS ounces 
+FROM pmix
+LEFT JOIN builds
+ON builds.id = pmix.id
+WHERE protein = 'brisket'
+OR item LIKE '%nachos%')
+SELECT sum(qty*ounces)/32 AS bags_brisket_used
+FROM brisketcte;
+
+#How much shrimp was used?
+WITH shrimp AS
+(SELECT item, qty,
+CASE WHEN item LIKE '%bowl%' THEN 4
+ELSE 2
+END AS ounces
+FROM pmix
+JOIN builds
+ON builds.id = pmix.id
+WHERE protein = 'shrimp')
+SELECT sum(qty*ounces) AS total_oz_shrimp
+FROM shrimp;
+
+#How much veggie mix was used?
+SELECT protein, qty*4.5 AS total_oz_veg #there were 4.5 oz of veg mix in each bowl
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+WHERE protein = 'veg mix';
+
+#How much of all other proteins were used?
+SELECT protein,sum(qty)/8 AS lbs_protein_used
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+GROUP BY protein
+HAVING protein NOT IN('rotis','fry chk','steak','brisket','veg mix', 'shrimp');
+#All other proteins were not featured in bowls, so all measurements were 2oz.
+#I used GROUP BY and filtered out the proteins in bowls with HAVING so that I could take care of the other proteins in one line of code.
+#Since the bowls were all based on pre existing tacos on the menu, I didn't see a significant change in the amount of proteins used overall.
+#However, the fish taco, which was among the most unpopular before the menu rollout, saw a drop in sales.
+#I advised the manager to lower truck pars for fish to ensure the product was fresh and avoid waste from it going out of date.
+
+#How much guacamole was used?
+WITH guaccte AS(
+SELECT item, qty, 
+CASE
+WHEN item LIKE '%SWC%' THEN 3
+WHEN item = 'classic guac' THEN 7
+WHEN item LIKE 'elote%' THEN 6
+WHEN item LIKE '%bowl%' THEN 2
+ELSE 80
+END AS ounces_guac
+FROM pmix
+LEFT JOIN builds #Used left join here because sides like classic guac and elote weren't on the builds table, but needed to be accounted for here.
+ON builds.id = pmix.id
+WHERE item LIKE '%guac%'
+OR cold4 = 'guac')
+SELECT sum(qty*ounces_guac) AS total_oz_guac
+FROM guaccte;
+#I found that the amount of guac the restaurant was using doubled!
+#I recommended that they doubled pars on both avocados and guac to prevent any issues with running out.
+
+#How much of each sauce did we use?
+WITH sauce1cte AS (
+SELECT name, sauce1, qty,
+CASE WHEN name LIKE 'bowl%' THEN 2
+WHEN sauce1 = 'sabor' THEN 1/3
+ELSE 1 END AS tbsp_sauce
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+WHERE sauce1 NOT IN ('spicy tikka', 'consome','') #I excluded these because they are not stored in bottles or were null values
+)
+SELECT sauce1, sum(qty*tbsp_sauce/2/24) AS btls_used
+FROM sauce1cte
+GROUP BY sauce1;
+
+SELECT sauce1, sum(qty)*2/64 AS bags_tikka_used
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+WHERE sauce1 = 'spicy tikka';
+
+SELECT sauce1, qty*4/64 AS bags_consome_used
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+WHERE sauce1 = 'consome';
+
+WITH sauce2cte AS (
+SELECT name, sauce2, qty,
+CASE WHEN sauce2 = 'syrup' THEN 1/3
+WHEN name LIKE 'bowl%' THEN 2
+ELSE 1
+END AS tbsp_sauce
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+WHERE sauce2 NOT IN ('nashville', '', 'buffalo') 
+)
+SELECT sauce2, sum(qty*tbsp_sauce)/2/24 AS btls_used
+FROM sauce2cte
+GROUP BY sauce2;
+
+SELECT sauce2, qty*2/64
+FROM pmix
+JOIN builds
+ON pmix.id = builds.id
+WHERE sauce2 = 'buffalo';
+#Most of the sauces had similar usage except for avocado crema. It had a significant increase in usage.
+#Avocado crema is featured on many of the new bowls even though it is not used on their taco counterpart, so it makes sense to see an increase!
+#I advised the manager to increase avocado crema pars to keep up with demand.
+
+#How much chips did we use?
+WITH chipscte AS (
+SELECT *, 
+CASE
+WHEN item = 'reg nachos' THEN 4
+WHEN item = 'lg nachos' THEN 8 
+WHEN item LIKE 'Reg%' THEN 40
+WHEN item LIKE 'Lg%' THEN 60
+WHEN item LIKE '%SWC' THEN 3
+WHEN item = 'catering guac' THEN 60
+WHEN item LIKE '%trio%' THEN 8
+ELSE 5
+END AS ounces_of_chips
+FROM (SELECT * FROM pmix
+WHERE item NOT LIKE 'TRIO%') AS pmix
+WHERE item = 'dip trio'
+OR item LIKE '%queso%'
+OR item LIKE '%elote%'
+OR item LIKE '%guac%'
+OR item LIKE '%salsa%'
+OR item LIKE '%nacho%')
+SELECT sum(qty*ounces_of_chips)/16 AS lbs_chips
+FROM chipscte
+;
+#The item 'dip trio' gives customers the option to pick 3 dips out of the 6 that we offer.
+#In the pmix table, there are also items called 'TRIO ___' with the blank being each specific side (queso, elote, etc) chosen by the customer.
+#In order to prevent double counting these for chips, I used a subquery to exclude them and only counted the ones flagged as 'dip trio'.
