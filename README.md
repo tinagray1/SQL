@@ -1,2 +1,0 @@
-# Tina Gray SQL Portfolio
-
